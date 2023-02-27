@@ -1,12 +1,13 @@
-const express = require("express");
-const cors = require("cors");
 require("dotenv").config();
-const port = process.env.PORT || 5000;
-const mongodb = require("mongodb");
-const { MongoClient, ServerApiVersion } = require("mongodb");
-
+const express = require("express");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
-app.use(express.json()); // Parse JSON request body
+const port = process.env.PORT || 5000;
+
+const cors = require("cors");
+
+app.use(cors());
+app.use(express.json());
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.fnn6vgm.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, {
@@ -14,6 +15,7 @@ const client = new MongoClient(uri, {
   useUnifiedTopology: true,
   serverApi: ServerApiVersion.v1,
 });
+
 // client.connect((err) => {
 //   const collection = client.db("test").collection("devices");
 //   // perform actions on the collection object
@@ -22,8 +24,9 @@ const client = new MongoClient(uri, {
 
 const run = async () => {
   try {
-    const db = client.db("folder");
-    const folderCollection = db.collection("folder-collection");
+    // await client.connect();
+    const db = client.db("folder-collection");
+    const folderCollection = db.collection("folder");
 
     app.get("/folders", async (req, res) => {
       const cursor = folderCollection.find({});
@@ -36,6 +39,14 @@ const run = async () => {
 
       const result = await folderCollection.insertOne(folder);
 
+      res.send(result);
+    });
+
+    //delete a folder from  api
+    app.delete("/folders/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await folderCollection.deleteOne(query);
       res.send(result);
     });
   } finally {
